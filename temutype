@@ -1,0 +1,1472 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Temutypist Developer Version</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
+
+        * {
+          box-sizing: border-box;
+        }
+
+        body {
+          font-family: 'Roboto Mono', 'Courier New', Courier, monospace;
+          background-color: #ff7208;
+          color: #3d3d3d;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          min-height: 100vh;
+          margin: 0;
+          padding: 80px 20px 40px 20px;
+          flex-direction: column;
+          overflow-x: hidden;
+        }
+
+        /* Credits Banner */
+        #credits-banner {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 34px;
+            background: rgba(255, 114, 8, .85);
+            border-top: 1px solid rgba(255,255,255,.15);
+            overflow: hidden;
+            z-index: 2147483646;
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+        }
+
+        #credits-banner span {
+            white-space: nowrap;
+            color: rgba(0, 0, 0, .9);
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 15px;
+            font-weight: bold;
+            padding-left: 100%;
+            animation: creditsScroll 10s linear infinite;
+        }
+
+        #technology-watermark {
+          position: fixed;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%) rotate(-45deg);
+          color: #ffffff;
+          opacity: 0.25;
+          font-family: Arial, Helvetica, sans-serif;
+          font-size: 5rem;
+          font-weight: bold;
+          white-space: nowrap;
+          pointer-events: none;
+          user-select: none;
+          z-index: 0;
+        }
+
+        #news-ticker-container {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 40px;
+          background-color: #ff7208;
+          border-bottom: 0px solid #d1d1d1;
+          color: #3d3d3d;
+          overflow: hidden;
+          z-index: 100;
+          display: flex;
+          align-items: center;
+        }
+
+        #news-ticker-message {
+          position: absolute;
+          white-space: nowrap;
+          font-size: 1em;
+          font-weight: bold;
+          will-change: transform;
+          transform: translateX(100vw);
+        }
+
+        #news-ticker-message.scrolling {
+          animation: scroll-left 60s linear;
+        }
+
+        #background-rain {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          z-index: -1;
+          overflow: hidden;
+          pointer-events: none;
+        }
+
+        .raining-word {
+          position: absolute;
+          color: #ffffff;
+          user-select: none;
+          animation-name: fall;
+          animation-timing-function: linear;
+        }
+
+        #game-container {
+          width: 100%;
+          max-width: 900px;
+          text-align: center;
+          position: relative;
+          z-index: 1;
+        }
+
+        #total-score {
+          font-size: 3.2em;
+          border-radius: 67px;
+          border: 5px solid #d1d1d1;
+          color: #ffffff;
+          font-weight: 700;
+          background-color: #ff7208;
+          padding: 5px 0;
+          width: 100%;
+          display: inline-block;
+        }
+
+        .score-popup {
+          position: absolute;
+          left: 50%;
+          top: 60px;
+          font-size: 1.5em;
+          color: #005a9c;
+          font-weight: bold;
+          pointer-events: none;
+          animation: float-up 2s ease-out forwards;
+        }
+
+        #typing-area {
+          position: relative;
+          width: 100%;
+          font-size: 1.8em;
+        }
+
+        #text-to-type {
+          background-color: #ff7208;
+          padding: 25px;
+          border-radius: 67px;
+          border: 5px solid #fff;
+          line-height: 1.6;
+          min-height: 100px;
+          cursor: text;
+          transition: border-color 0.2s;
+          white-space: pre-wrap;
+          position: relative;
+          z-index: 5;
+        }
+
+        #text-to-type.focused {
+          border-color: #fff;
+        }
+
+        #typing-input {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          opacity: 0;
+          z-index: 10;
+          cursor: text;
+          pointer-events: none;
+        }
+
+        #typing-input:focus {
+          pointer-events: auto;
+        }
+
+        #cursor {
+          background: #fff;
+          width: 3px;
+          height: 1.1em;
+          border-radius: 0px;
+          position: absolute;
+          z-index: 5;
+          transition: left 0.08s ease-out, top 0.08s ease-out;
+          animation: blink 1s step-end infinite;
+        }
+
+        #cursor.solid {
+          animation: none;
+          background: #ffffff;
+        }
+
+        .word {
+          display: inline-block;
+          line-height: 1.6;
+        }
+
+        .char {
+          position: relative;
+          display: inline-block;
+          color: #ffffff;
+          transition: color 0.1s, background-color 0.1s;
+        }
+
+        .char.correct {
+          color: #ffea00;
+        }
+
+        .char.incorrect {
+          color: #c62828;
+        }
+
+        #test-info-container {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          width: 100%;
+          margin-top: 10px;
+          flex-wrap: wrap;
+          gap: 10px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .game-button {
+          background-color: #fff;
+          border: 1px solid #fff;
+          border-radius: 5px;
+          padding: 8px 12px;
+          cursor: pointer;
+          font-family: 'Roboto Mono', sans-serif;
+          font-size: 0.9em;
+          white-space: nowrap;
+          transition: background-color 0.2s, border-color 0.2s;
+        }
+
+        .game-button:hover {
+          background-color: #98989C;
+        }
+
+        .game-button.active {
+            background-color: #e8f5e9;
+            border-color: #2e9d32;
+            font-weight: bold;
+        }
+
+        #test-results {
+          font-size: 1.2em;
+          color: #3d3d3d;
+          font-weight: bold;
+        }
+
+        #upgrades-container {
+          margin-top: 60px;
+          width: 100%;
+          position: relative;
+          z-index: 1;
+        }
+
+        #upgrades-container h2 {
+          font-size: 2em;
+          margin-bottom: 5px;
+          color: #3d3d3d;
+        }
+
+        #upgrades-container p {
+          font-size: 1.1em;
+          margin-bottom: 25px;
+          color: #555;
+        }
+
+        .upgrade {
+          text-align: left;
+          background-color: #98989C;
+          padding: 20px;
+          margin-bottom: 15px;
+          border-radius: 10px;
+          border: 1px solid #fff;
+          transition: all 0.2s ease-in-out;
+          position: relative;
+          z-index: 2;
+        }
+
+        .upgrade.buyable {
+          cursor: pointer;
+        }
+
+        .upgrade.buyable:hover {
+          transform: translateY(-3px);
+          box-shadow: 0 6px 15px rgba(0, 0, 0, 0.12);
+        }
+
+        .upgrade.locked {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+
+        .upgrade.purchased {
+          background: linear-gradient(145deg, #e8f5e9, #d8f0d9);
+          border-color: #fff;
+          box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .upgrade.hidden {
+          display: none;
+        }
+
+        .upgrade-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-weight: bold;
+          font-size: 1.1em;
+        }
+
+        .upgrade-stats {
+          font-size: 0.9em;
+          margin-top: 10px;
+          color: #6c757d;
+          display: flex;
+          flex-wrap: wrap;
+          gap: 15px;
+        }
+
+        .upgrade-desc {
+          font-size: 0.9em;
+          margin-top: 10px;
+          color: #6c757d;
+        }
+
+        .purchased .upgrade-desc {
+          color: #1b5e20;
+        }
+
+        .level-badge {
+          background-color: #005a9c;
+          color: white;
+          padding: 3px 10px;
+          border-radius: 12px;
+          font-size: 0.85em;
+        }
+
+        .modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+
+        .modal-backdrop.visible {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .modal {
+            background-color: #fdfbf7;
+            padding: 30px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+            transform: scale(0.9);
+            transition: transform 0.3s;
+            display: flex;
+            flex-direction: column;
+        }
+        .modal-backdrop.visible .modal {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #d1d1d1;
+            padding-bottom: 15px;
+            margin-bottom: 15px;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 1.8em;
+        }
+
+        .modal-close {
+            font-size: 2em;
+            font-weight: bold;
+            cursor: pointer;
+            background: none;
+            border: none;
+            color: #3d3d3d;
+        }
+        .modal-body {
+            overflow-y: auto;
+        }
+
+        .changelog-entry, .status-section, .cheat-section {
+            margin-bottom: 20px;
+        }
+
+        .changelog-entry h3, .status-section h3, .cheat-section h3 {
+            margin: 0 0 10px 0;
+            font-size: 1.3em;
+            color: #005a9c;
+        }
+
+        .changelog-entry ul {
+            list-style-type: disc;
+            padding-left: 20px;
+            margin: 0;
+        }
+        .changelog-entry li {
+            margin-bottom: 5px;
+        }
+
+        #average-stats-display {
+          font-size: 1.1em;
+          font-weight: bold;
+          margin-bottom: 15px;
+        }
+        #test-history-list {
+          list-style-type: none;
+          padding: 0;
+          margin: 0;
+        }
+        #test-history-list li {
+            background-color: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+        }
+        #test-history-list .wpm { font-weight: bold; }
+
+        .cheat-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .cheat-controls .control-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .cheat-controls input {
+            flex-grow: 1;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-family: 'Roboto Mono', monospace;
+        }
+
+        @keyframes blink {
+          from, to { background-color: transparent; }
+          50% { background-color: #2f9e33; }
+        }
+
+        @keyframes float-up {
+          0% { transform: translate(-1%, 0); opacity: 1; }
+          100% { transform: translate(-50%, -80px); opacity: 0; }
+        }
+
+        @keyframes fall {
+          from { transform: translateY(-10vh) rotate(var(--start-rot)); }
+          to { transform: translateY(110vh) rotate(var(--end-rot)); }
+        }
+
+        @keyframes scroll-left {
+          from { transform: translateX(100vw); }
+          to { transform: translateX(-100%); }
+        }
+
+        @keyframes creditsScroll {
+          from { transform: translateX(0); }
+          to { transform: translateX(-100%); }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="technology-watermark">fletcher16.technology</div>
+    <div id="news-ticker-container">
+        <div id="news-ticker-message"></div>
+    </div>
+
+    <div id="background-rain"></div>
+    <div id="game-container">
+        <div id="total-score">Score: 0</div>
+        <p>Temutypist Developer Version - Made by adler16 and moizekan</p>
+        <div id="typing-area">
+            <div id="text-to-type" onclick="document.getElementById('typing-input').focus()"></div>
+            <div id="cursor"></div>
+            <input type="text" id="typing-input" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+        </div>
+
+        <div id="test-info-container">
+            <div class="button-group">
+                <button id="new-text-button" class="game-button">New Text/新文字</button>
+                <button id="reset-button" class="game-button">Reset Game/重置遊戲</button>
+                <button id="status-button" class="game-button">Statistics/統計數據</button>
+            </div>
+            <div id="test-results"></div>
+            <div class="button-group">
+                <button id="changelog-button" class="game-button">Changes/變更</button>
+                <button id="hyper-speed-button" class="game-button">Hyper Speed/超高速</button>
+                <button id="cheat-button" class="game-button">Cheating Menu/作弊菜單</button>
+                <button id="fullscreen-button" class="game-button">Open in New Tab</button>
+            </div>
+        </div>
+
+        <div id="upgrades-container">
+            <h2>Upgrades</h2>
+            <p>
+                Multiplier: <b id="multiplier">1</b>x | temu/sec (TPS):
+                <b id="sps">0.00</b>
+            </p>
+            <div id="upgrades-list"></div>
+        </div>
+    </div>
+
+    <div id="changelog-modal-backdrop" class="modal-backdrop">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Changelog</h2>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="changelog-entry">
+                    <h3>Version 2.2</h3>
+                    <ul>
+                        <li><b>New features:</b> Matte black theme.</li>
+                        <li><b>Changelog:</b> Removed intro click-gate, removed background music, opens in a proper new tab now.</li>
+                        <li><b>Test Stats:</b> WPM and Accuracy now displayed after each test.</li>
+                    </ul>
+                </div>
+                <div class="changelog-entry">
+                    <h3>Version 2.1</h3>
+                    <ul>
+                        <li><b>New features:</b> Anticheat is added, cheating is very bad to do and dont do it! new theme to match temu</li>
+                    </ul>
+                </div>
+                <div class="changelog-entry">
+                    <h3>Version 1.0</h3>
+                    <ul>
+                        <li>First stable version of the game. Still in testing, need player feedback.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Status Modal -->
+    <div id="status-modal-backdrop" class="modal-backdrop">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Your Status</h2>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="average-stats-display"></div>
+                <h3>Test History (Fastest First)</h3>
+                <ul id="test-history-list">
+                    <!-- History will be populated by JS -->
+                </ul>
+            </div>
+        </div>
+    </div>
+    <!-- Cheat Modal -->
+    <div id="cheat-modal-backdrop" class="modal-backdrop">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Cheats are BAD!</h2>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="cheat-section">
+                    <h3>Score</h3>
+                    <div class="cheat-controls">
+                        <div class="control-group">
+                            <input type="number" id="add-score-input" placeholder="Enter score amount">
+                            <button id="add-score-button" class="game-button">Add</button>
+                        </div>
+                        <button id="add-massive-score-button" class="game-button">Add 1 Quadrillion</button>
+                    </div>
+                </div>
+                <div class="cheat-section">
+                    <h3>Multiplier</h3>
+                    <div class="cheat-controls">
+                        <div class="control-group">
+                            <input type="number" id="set-multiplier-input" placeholder="New multiplier (e.g., 1000)">
+                            <button id="set-multiplier-button" class="game-button">Set</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="cheat-section">
+                    <h3>Upgrades</h3>
+                    <div class="cheat-controls">
+                        <button id="buy-all-upgrades-button" class="game-button">Buy/Max All Upgrades</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        const gameContainer = document.getElementById('game-container');
+        const textToTypeEl = document.getElementById('text-to-type');
+        const typingInputEl = document.getElementById('typing-input');
+        const totalScoreEl = document.getElementById('total-score');
+        const multiplierEl = document.getElementById('multiplier');
+        const spsEl = document.getElementById('sps');
+        const upgradesListEl = document.getElementById('upgrades-list');
+        const cursorEl = document.getElementById('cursor');
+        const testResultsEl = document.getElementById('test-results');
+        const backgroundRainEl = document.getElementById('background-rain');
+        const newsTickerMessageEl = document.getElementById('news-ticker-message');
+
+        // Button and Modal references
+        const newTextButton = document.getElementById('new-text-button');
+        const hyperSpeedButton = document.getElementById('hyper-speed-button');
+        const resetButton = document.getElementById('reset-button');
+        const changelogButton = document.getElementById('changelog-button');
+        const statusButton = document.getElementById('status-button');
+        const cheatButton = document.getElementById('cheat-button');
+        const fullscreenButton = document.getElementById('fullscreen-button');
+
+        const changelogModal = document.getElementById('changelog-modal-backdrop');
+        const statusModal = document.getElementById('status-modal-backdrop');
+        const cheatModal = document.getElementById('cheat-modal-backdrop');
+        const allModals = [changelogModal, statusModal, cheatModal];
+
+        // Cheat modal elements
+        const addScoreInput = document.getElementById('add-score-input');
+        const addScoreButton = document.getElementById('add-score-button');
+        const addMassiveScoreButton = document.getElementById('add-massive-score-button');
+        const setMultiplierInput = document.getElementById('set-multiplier-input');
+        const setMultiplierButton = document.getElementById('set-multiplier-button');
+        const buyAllUpgradesButton = document.getElementById('buy-all-upgrades-button');
+
+        let words = ["rizz", "skibidi", "the", "be", "of", "and", "a", "to", "in", "he", "have", "it", "that", "for", "they", "I", "with", "as", "not", "on", "she", "at", "by", "this", "we", "you", "do", "but", "from", "or", "which", "one", "would", "all", "will", "there", "say", "who", "make", "when", "can", "more", "if", "no", "man", "out", "other", "so", "what", "time", "up", "go", "about", "than", "into", "could", "state", "only", "new", "year", "some", "take", "come", "these", "know", "see", "use", "get", "like", "then", "first", "any", "work", "now", "may", "such", "give", "over", "think", "most", "even", "find", "day", "also", "after", "way", "many", "must", "look", "before", "great", "back", "through", "long", "where", "much", "should", "well", "people", "down", "own", "just", "because", "good", "each", "those", "feel", "seem", "how", "high", "too", "place", "little", "world", "very", "still", "nation", "hand", "old", "life", "tell", "write", "become", "here", "show", "house", "both", "between", "need", "mean", "call", "develop", "under", "last", "right", "move", "thing", "general", "school", "never", "same", "another", "begin", "while", "number", "part", "turn", "real", "leave", "might", "want", "point", "form", "off", "child", "few", "small", "since", "against", "ask", "late", "home", "interest", "large", "person", "end", "open", "public", "follow", "during", "present", "without", "again", "hold", "govern", "around", "possible", "head", "consider", "word", "program", "problem", "however", "lead", "system", "set", "order", "eye", "plan", "run", "keep", "face", "fact", "group", "play", "stand", "increase", "early", "course", "change", "help", "line", "temu", "shein", "mao", "sahur", "heart", "lunge", "rat", "rice", "dumpling", "potsticker", "burger", "neat", "health", "wealth", "adler", "zedong", "supreme", "leader"];
+        let totalScore = 0;
+        let scoreMultiplier = 0;
+        let scorePerSecond = 0;
+        let startTime = null;
+        let currentText = '';
+        let rainTimeoutId;
+        let testHistory = [];
+        let hasCheated = false;
+        let isHyperSpeedActive = false;
+
+        let isTickerActive = false;
+        let newsQueue = [];
+        const newsMessages = [{
+            spsThreshold: 10,
+            message: "Unusual keyboard clatter reported in your area.. could it be you?",
+            triggered: false
+        }, {
+            spsThreshold: 200,
+            message: "Weather Alert: Meteorologists baffled by a strange precipitation of falling words.",
+            triggered: false
+        }, {
+            spsThreshold: 800,
+            message: "Librarians report mysterious 'shushing' sounds emanating from keyboards themselves.",
+            triggered: false
+        }, {
+            spsThreshold: 2000,
+            message: "The global economy is now measured in WPM (Words Per Minute).",
+            triggered: false
+        }, {
+            spsThreshold: 10000,
+            message: "Sentient keyboards demand unionization and better keycaps.",
+            triggered: false
+        }, {
+            spsThreshold: 50000,
+            message: "Millions of mischievous monkeys madly mash keys, methodically manufacturing magnificent, maddeningly meaningless masterpieces.",
+            triggered: false
+        }, {
+            spsThreshold: 200000,
+            message: "History is being rewritten. Ancient texts are appearing online, fully transcribed.",
+            triggered: false
+        }, {
+            spsThreshold: 1000000,
+            message: "Rumors of a 'Text-based lifeform' emerge from the deep web. It communicates in perfect prose.",
+            triggered: false
+        }, {
+            spsThreshold: 2000000,
+            message: "The stock market has been replaced by the 'Stonk Market', where popular memes are traded as text blocks.",
+            triggered: false
+        }, {
+            spsThreshold: 10000000,
+            message: "World leaders hold emergency summit to address the 'Logographic Singularity'.",
+            triggered: false
+        }, {
+            spsThreshold: 100000000,
+            message: "The final message is being typed. The universe holds its breath, for the answer is 67.",
+            triggered: false
+        }, ];
+
+        const upgrades = [{
+                id: 'monkey',
+                name: 'Child',
+                baseCost: 50000,
+                type: 'passive',
+                wpm: 5,
+                wpmPerLevel: 2,
+                accuracyRange: [0.05, 0.10],
+                description: "A child to help you type. It presses random keys and eventually hits the right ones. haha"
+            }, {
+                id: 'beginner',
+                name: 'Shein',
+                baseCost: 60000,
+                type: 'passive',
+                wpm: 10,
+                wpmPerLevel: 2,
+                accuracyRange: [0.70, 0.80],
+                description: "mass produced clothes"
+            },
+            {
+                id: 'smartkeyboard',
+                name: 'fast produce',
+                baseCost: 2000000,
+                type: 'keyboard',
+                multiplier: 9,
+                description: "upgrade equipment for mass production"
+            },
+            {
+                id: 'average',
+                name: 'small factory',
+                baseCost: 4000000,
+                type: 'passive',
+                wpm: 20,
+                wpmPerLevel: 4,
+                accuracyRange: [0.90, 1.00],
+                description: "small factory to produce item low quality"
+            }, {
+                id: 'experienced',
+                name: 'Experienced worker',
+                baseCost: 8000000,
+                type: 'passive',
+                wpm: 40,
+                wpmPerLevel: 8,
+                accuracyRange: [0.90, 1.00],
+                description: "good at mass producing products"
+            }, {
+                id: 'fastfingers',
+                name: 'advanced machine',
+                baseCost: 15000000,
+                type: 'keyboard',
+                multiplier: 18,
+                description: "makes more of the big big products faster"
+            },
+            {
+                id: 'speed',
+                name: 'alibaba',
+                baseCost: 25000000,
+                type: 'passive',
+                wpm: 80,
+                wpmPerLevel: 8,
+                accuracyRange: [0.90, 1.00],
+                description: "mass produced machines"
+            }, {
+                id: 'scribe',
+                name: 'aliexpress',
+                baseCost: 50000000,
+                type: 'passive',
+                wpm: 100,
+                wpmPerLevel: 10,
+                accuracyRange: [0.95, 1.00],
+                description: "very cheap products"
+            },
+            {
+                id: 'steno',
+                name: 'factory',
+                baseCost: 90000000,
+                type: 'passive',
+                wpm: 120,
+                wpmPerLevel: 12,
+                accuracyRange: [1.00, 1.00],
+                description: "a normal factory for producing products"
+            }, {
+                id: 'neuralkeyboard',
+                name: 'AI sewing machine',
+                baseCost: 200000000,
+                type: 'keyboard',
+                multiplier: 27,
+                description: "ai assisted sewing machine"
+            },
+            {
+                id: 'rocket',
+                name: 'large factory',
+                baseCost: 360000000,
+                type: 'passive',
+                wpm: 160,
+                wpmPerLevel: 16,
+                accuracyRange: [0.90, 1.00],
+                description: "a big factory to mass produce items"
+            }, {
+                id: 'chatgpt',
+                name: 'warehouse',
+                baseCost: 5000000000,
+                type: 'passive',
+                wpm: 240,
+                wpmPerLevel: 24,
+                accuracyRange: [0.90, 1.00],
+                description: "a huge warehouse to produce items"
+            }, {
+                id: 'ocralgorithm',
+                name: 'facilities',
+                baseCost: 1000000000,
+                type: 'passive',
+                wpm: 480,
+                wpmPerLevel: 48,
+                accuracyRange: [1.00, 1.00],
+                description: "many facilities to produce items"
+            }, {
+                id: 'quantumtypist',
+                name: 'mass hiring',
+                baseCost: 1500000000,
+                type: 'passive',
+                wpm: 900,
+                wpmPerLevel: 45,
+                accuracyRange: [1.00, 1.00],
+                description: "Many employees"
+            },
+            {
+                id: 'hivemind',
+                name: 'large scale operation',
+                baseCost: 40000000000,
+                type: 'passive',
+                wpm: 1500,
+                wpmPerLevel: 75,
+                accuracyRange: [1.00, 1.00],
+                description: 'company now big'
+            },
+            {
+                id: 'genie',
+                name: 'more fast machines',
+                baseCost: 676767000000,
+                type: 'keyboard',
+                multiplier: 45,
+                description: "machines now go faster"
+            },
+            {
+                id: 'realityeditor',
+                name: 'the new big machine',
+                baseCost: 150000000000,
+                type: 'keyboard',
+                multiplier: 125,
+                description: "a new machine very fast and big"
+            },
+            {
+                id: 'singularity',
+                name: 'Xi Jinping',
+                baseCost: 75000000000,
+                type: 'passive',
+                wpm: 3500,
+                wpmPerLevel: 350,
+                accuracyRange: [1.00, 1.00],
+                description: 'xi jinping the supreme ruler'
+            },
+        ].map(u => ({ ...u,
+            level: 0,
+            costIncreaseFactor: 2.5
+        }));
+        const upgradeElements = {};
+
+        function formatScore(score) {
+            const truncateToTwoDecimals = (num) => Math.floor(num * 100) / 100;
+
+            const format = (num, suffix) => {
+                return truncateToTwoDecimals(num).toString() + suffix;
+            };
+
+            if (score >= 1_000_000_000_000_000_000) return format(score / 1_000_000_000_000_000_000, 'Qi');
+            if (score >= 1_000_000_000_000_000) return format(score / 1_000_000_000_000_000, 'Q');
+            if (score >= 1_000_000_000_000) return format(score / 1_000_000_000_000, 'T');
+            if (score >= 1_000_000_000) return format(score / 1_000_000_000, 'B');
+            if (score >= 1_000_000) return format(score / 1_000_000, 'M');
+            if (score >= 1_000) return format(score / 1_000, 'K');
+
+            return Math.floor(score).toLocaleString();
+        }
+
+        function generateText() {
+            const wordCount = 12 + Math.floor(Math.random() * 5);
+            currentText = Array.from({
+                length: wordCount
+            }, () => words[Math.floor(Math.random() * words.length)]).join(' ');
+            startTest();
+        }
+
+        function renderText() {
+            const typedText = typingInputEl.value;
+            const typedLength = typedText.length;
+            textToTypeEl.innerHTML = '';
+            let charIndex = 0;
+            const wordsInText = currentText.split(' ');
+            wordsInText.forEach((word, wordIndex) => {
+                const wordEl = document.createElement('span');
+                wordEl.className = 'word';
+                for (const char of word) {
+                    const charEl = document.createElement('span');
+                    charEl.className = 'char';
+                    charEl.textContent = char;
+                    if (charIndex < typedLength) {
+                        charEl.classList.add(char === typedText[charIndex] ? 'correct' : 'incorrect');
+                    }
+                    wordEl.appendChild(charEl);
+                    charIndex++;
+                }
+                textToTypeEl.appendChild(wordEl);
+                if (wordIndex < wordsInText.length - 1) {
+                    const spaceEl = document.createElement('span');
+                    spaceEl.className = 'char';
+                    spaceEl.innerHTML = ' ';
+                    if (charIndex < typedLength) {
+                        spaceEl.classList.add(typedText[charIndex] === ' ' ? 'correct' : 'incorrect');
+                    }
+                    textToTypeEl.appendChild(spaceEl);
+                    charIndex++;
+                }
+            });
+            updateCursorPosition();
+        }
+
+        function updateCursorPosition() {
+            const typedLength = typingInputEl.value.length;
+            const allCharSpans = textToTypeEl.querySelectorAll('.char');
+            if (allCharSpans.length === 0) return;
+            const containerRect = textToTypeEl.getBoundingClientRect();
+            let targetChar = (typedLength < currentText.length) ? allCharSpans[typedLength] : allCharSpans[allCharSpans.length - 1];
+            if (targetChar) {
+                const charRect = targetChar.getBoundingClientRect();
+                let cursorLeft = charRect.left - containerRect.left;
+                if (typedLength >= currentText.length) {
+                    cursorLeft += charRect.width;
+                }
+                const cursorTop = charRect.top - containerRect.top;
+                cursorEl.style.left = `${cursorLeft}px`;
+                cursorEl.style.top = `${cursorTop}px`;
+                cursorEl.style.height = `${charRect.height}px`;
+            }
+        }
+
+        function startTest() {
+            typingInputEl.value = '';
+            typingInputEl.maxLength = currentText.length;
+            startTime = null;
+            renderText();
+        }
+
+        function finishTest() {
+            if (!startTime) return;
+            const endTime = new Date();
+            const timeDiff = (endTime - startTime) / 1000 / 60;
+            let correctChars = 0;
+            for (let i = 0; i < currentText.length; i++) {
+                if (typingInputEl.value[i] === currentText[i]) correctChars++;
+            }
+            const cpm = timeDiff > 0 ? (correctChars / timeDiff) : 0;
+            const finalWpm = Math.max(0, Math.round(cpm / 4.7));
+            const accuracy = currentText.length > 0 ? (correctChars / currentText.length) : 0;
+            const accuracyPercent = Math.round(accuracy * 100);
+            const scoreGained = Math.round(((finalWpm * accuracyPercent) / 2) * 8 * scoreMultiplier);
+
+            if (scoreGained > 0) {
+                totalScore += scoreGained;
+                showScorePopup(scoreGained);
+            }
+
+            testHistory.push({
+                wpm: finalWpm,
+                accuracy: accuracyPercent
+            });
+            testResultsEl.textContent = `${finalWpm} WPM | ${accuracyPercent}% Accuracy`;
+            generateText();
+        }
+
+        function showScorePopup(score) {
+            const popupEl = document.createElement('div');
+            popupEl.className = 'score-popup';
+            popupEl.textContent = `+${formatScore(score)}`;
+            gameContainer.appendChild(popupEl);
+            setTimeout(() => popupEl.remove(), 2000);
+        }
+
+        function initializeUpgrades() {
+            upgradesListEl.innerHTML = '';
+            upgrades.sort((a, b) => a.baseCost - b.baseCost).forEach(upgrade => {
+                const isKeyboard = upgrade.type === 'keyboard';
+                const levelBadgeHtml = isKeyboard ? '' : `<span class="level-badge" data-value-type="level">Lv. ${upgrade.level}</span>`;
+                let statsHtml = '';
+                if (upgrade.type === 'passive') {
+                    statsHtml = `<div class="upgrade-stats"><span>WPM: <span data-value-type="wpm">0</span></span><span>Accuracy: <span data-value-type="accuracy">0%</span></span><span>SPS: <span data-value-type="sps">0.00</span></span></div>`;
+                }
+                const upgradeEl = document.createElement('div');
+                upgradeEl.className = 'upgrade hidden';
+                upgradeEl.dataset.id = upgrade.id;
+                upgradeEl.innerHTML = `<div class="upgrade-header"><span class="upgrade-name">${upgrade.name} ${levelBadgeHtml}</span><span class="upgrade-cost" data-value-type="cost"></span></div>${statsHtml}<p class="upgrade-desc">${upgrade.description}</p>`;
+                upgradesListEl.appendChild(upgradeEl);
+                upgradeElements[upgrade.id] = upgradeEl;
+            });
+        }
+
+        function updateUpgrades() {
+            let showNext = true;
+            for (const upgrade of upgrades) {
+                const upgradeEl = upgradeElements[upgrade.id];
+                if (!upgradeEl) continue;
+                if (!showNext && upgrade.level === 0) {
+                    upgradeEl.classList.add('hidden');
+                    continue;
+                }
+
+                upgradeEl.classList.remove('hidden');
+                if (upgrade.level === 0) {
+                    showNext = false;
+                }
+
+                const isKeyboard = upgrade.type === 'keyboard';
+                let isMaxLevel = isKeyboard ? upgrade.level >= 1 : upgrade.level >= 99;
+                if (upgrade.id === 'monkey' && upgrade.level >= 2) {
+                    isMaxLevel = true;
+                }
+
+                let cost = Math.ceil(upgrade.baseCost * Math.pow(upgrade.costIncreaseFactor, upgrade.level));
+                if (upgrade.id === 'monkey' && upgrade.level === 1) {
+                    cost = 10000000000000;
+                }
+
+                const canAfford = totalScore >= cost;
+                upgradeEl.classList.toggle('buyable', canAfford && !isMaxLevel);
+                upgradeEl.classList.toggle('locked', !canAfford || isMaxLevel);
+                upgradeEl.classList.toggle('purchased', isKeyboard && isMaxLevel);
+
+                if (upgrade.id === 'monkey') {
+                    upgradeEl.querySelector('.upgrade-name').innerHTML = `${upgrade.name} <span class="level-badge" data-value-type="level">Lv. ${upgrade.level}</span>`;
+                    upgradeEl.querySelector('.upgrade-desc').textContent = upgrade.description;
+                }
+
+                const costEl = upgradeEl.querySelector('[data-value-type="cost"]');
+                if (costEl) {
+                    if (isMaxLevel && (isKeyboard || upgrade.id === 'monkey')) {
+                        costEl.textContent = 'Active';
+                    } else if (upgrade.id === 'monkey' && upgrade.level >= 2) {
+                        costEl.textContent = 'Active';
+                    } else {
+                        costEl.textContent = `Cost: ${formatScore(cost)}`;
+                    }
+                }
+
+                if (!isKeyboard) {
+                    const levelEl = upgradeEl.querySelector('[data-value-type="level"]');
+                    if (levelEl) levelEl.textContent = `Lv. ${upgrade.level}`;
+                    const currentWpm = upgrade.wpm + (upgrade.level * upgrade.wpmPerLevel);
+                    const avgAccuracy = ((upgrade.accuracyRange[0] + upgrade.accuracyRange[1]) / 2) * 100;
+                    const sps = calculateSPSForUpgrade(upgrade);
+
+                    let nextWpmText = '';
+                    if (!isMaxLevel) {
+                        if (upgrade.id === 'monkey' && upgrade.level === 1) {} else {
+                            nextWpmText = ` (Next: ${currentWpm + upgrade.wpmPerLevel})`;
+                        }
+                    }
+
+                    upgradeEl.querySelector('[data-value-type="wpm"]').textContent = `${currentWpm}${nextWpmText}`;
+                    upgradeEl.querySelector('[data-value-type="accuracy"]').textContent = `${avgAccuracy.toFixed(0)}%`;
+                    upgradeEl.querySelector('[data-value-type="sps"]').textContent = sps.toFixed(0);
+                }
+            };
+        }
+
+        function buyUpgrade(upgrade) {
+            let cost = Math.ceil(upgrade.baseCost * Math.pow(upgrade.costIncreaseFactor, upgrade.level));
+            if (upgrade.id === 'monkey' && upgrade.level === 1) {
+                cost = 100000000;
+            }
+            if (totalScore < cost) return;
+            totalScore -= cost;
+            upgrade.level++;
+            if (upgrade.id === 'monkey' && upgrade.level === 1) {
+                upgrade.name = 'Mass hiring of children';
+                upgrade.description = "A children monkeys... a million keyboards. The brainrot will begin. Will they write skibidi toilet?";
+                upgrade.wpm = 50000;
+                upgrade.wpmPerLevel = 0;
+                upgrade.accuracyRange = [0.20, 0.70];
+            }
+            if (upgrade.id === 'monkey' && upgrade.level === 2) {
+                newsQueue.push("BREAKING NEWS: Global monkey population surges! Experts blame a single, powerful typist. It's a monkeypocalypse! STOP STEALING THEM");
+                processNewsQueue();
+            }
+
+            if (upgrade.type === 'keyboard') recalculateMultiplier();
+            else recalculateSPS();
+        }
+
+        function recalculateMultiplier() {
+            let baseMultiplier = upgrades.reduce((mult, up) => {
+                if (up.type === 'keyboard' && up.level > 0) return mult * up.multiplier;
+                return mult;
+            }, 1);
+
+            if (scoreMultiplier !== baseMultiplier && hasCheated) {
+                // Keep the cheated multiplier
+            } else {
+                scoreMultiplier = baseMultiplier;
+            }
+
+            multiplierEl.textContent = `${scoreMultiplier}x`;
+        }
+
+        function calculateSPSForUpgrade(up) {
+            if (up.type !== 'passive' || up.level === 0) return 0;
+
+            if (up.id === 'monkey' && up.level >= 2) {
+                const currentWpm = up.wpm;
+                const avgAccuracy = (up.accuracyRange[0] + up.accuracyRange[1]) / 2;
+                const scaledWpm = Math.pow(currentWpm, 1.2);
+                const scorePerTest = (scaledWpm * (avgAccuracy * 100)) / 10;
+                const charsPerTest = 50;
+                if (currentWpm === 0) return 0;
+                const timePerTest = (charsPerTest / 5 / currentWpm) * 60;
+                return scorePerTest / timePerTest;
+            }
+
+            if (up.id === 'monkey' && up.level === 1) {
+                const originalMonkeyWpm = 10;
+                const originalMonkeyAccuracy = (0.05 + 0.10) / 2;
+                const scaledWpm = Math.pow(originalMonkeyWpm, 1.2);
+                const scorePerTest = (scaledWpm * (originalMonkeyAccuracy * 100)) / 10;
+                const charsPerTest = 50;
+                const timePerTest = (charsPerTest / 5 / originalMonkeyWpm) * 60;
+                return scorePerTest / timePerTest;
+            }
+
+            const currentWpm = up.wpm + ((up.level - 1) * up.wpmPerLevel);
+            const avgAccuracy = (up.accuracyRange[0] + up.accuracyRange[1]) / 2;
+            const scaledWpm = Math.pow(currentWpm, 1.2);
+            const scorePerTest = (scaledWpm * (avgAccuracy * 100)) / 10;
+            const charsPerTest = 50;
+            if (currentWpm === 0) return 0;
+            const timePerTest = (charsPerTest / 5 / currentWpm) * 60;
+            return (scorePerTest / timePerTest) * up.level;
+        }
+
+        function recalculateSPS() {
+            scorePerSecond = upgrades.reduce((totalSps, up) => {
+                return totalSps + calculateSPSForUpgrade(up);
+            }, 0);
+            spsEl.textContent = scorePerSecond.toFixed(0);
+            checkNewsTriggers();
+        }
+
+        function checkNewsTriggers() {
+            newsMessages.forEach(msg => {
+                if (!msg.triggered && scorePerSecond >= msg.spsThreshold) {
+                    msg.triggered = true;
+                    newsQueue.push(msg.message);
+                }
+            });
+            processNewsQueue();
+        }
+
+        function executeCheat(cheatFunction) {
+            if (!hasCheated) {
+                hasCheated = true;
+                processNewsQueue();
+            }
+            cheatFunction();
+        }
+
+        function processNewsQueue() {
+            if (isTickerActive || newsQueue.length === 0) {
+                return;
+            }
+            isTickerActive = true;
+            const message = newsQueue.shift();
+            newsTickerMessageEl.textContent = message;
+            newsTickerMessageEl.classList.add('scrolling');
+        }
+
+        function saveGame() {
+            const gameState = {
+                totalScore: totalScore,
+                upgrades: upgrades.map(u => ({
+                    id: u.id,
+                    level: u.level,
+                    ...(u.id === 'monkey' && u.level > 0 && {
+                        name: u.name,
+                        description: u.description,
+                        wpm: u.wpm,
+                        wpmPerLevel: u.wpmPerLevel,
+                        accuracyRange: u.accuracyRange
+                    })
+                })),
+                newsTriggers: newsMessages.map(n => n.triggered),
+                testHistory: testHistory,
+                hasCheated: hasCheated,
+                scoreMultiplier: scoreMultiplier,
+                isHyperSpeedActive: isHyperSpeedActive
+            };
+            localStorage.setItem('idleTypistSave', JSON.stringify(gameState));
+        }
+
+        function loadGame() {
+            const savedStateJSON = localStorage.getItem('idleTypistSave');
+            if (!savedStateJSON) return;
+            try {
+                const savedState = JSON.parse(savedStateJSON);
+                totalScore = savedState.totalScore || 0;
+                testHistory = savedState.testHistory || [];
+                hasCheated = savedState.hasCheated || false;
+                isHyperSpeedActive = savedState.isHyperSpeedActive || false;
+
+                if (hasCheated) {
+                    scoreMultiplier = savedState.scoreMultiplier || 1;
+                }
+
+                if (savedState.upgrades) {
+                    savedState.upgrades.forEach(savedUpgrade => {
+                        const gameUpgrade = upgrades.find(u => u.id === savedUpgrade.id);
+                        if (gameUpgrade) {
+                            gameUpgrade.level = savedUpgrade.level || 0;
+                            if (savedUpgrade.id === 'monkey' && savedUpgrade.level > 0) {
+                                gameUpgrade.name = savedUpgrade.name;
+                                gameUpgrade.description = savedUpgrade.description;
+                                gameUpgrade.wpm = savedUpgrade.wpm;
+                                gameUpgrade.wpmPerLevel = savedUpgrade.wpmPerLevel;
+                                gameUpgrade.accuracyRange = savedUpgrade.accuracyRange;
+                            }
+                        }
+                    });
+                }
+                if (savedState.newsTriggers) {
+                    savedState.newsTriggers.forEach((triggered, index) => {
+                        if (newsMessages[index]) {
+                            newsMessages[index].triggered = triggered;
+                        }
+                    });
+                }
+            } catch (e) {
+                console.error("Failed to load saved game:", e);
+            }
+        }
+
+        function createRainingWord() {
+            if (!backgroundRainEl) return;
+            const wordEl = document.createElement('div');
+            wordEl.className = 'raining-word';
+            wordEl.textContent = words[Math.floor(Math.random() * words.length)];
+            const duration = 8 + Math.random() * 10;
+            const startRotation = Math.random() * 60 - 30;
+            const endRotation = startRotation + Math.random() * 40 - 20;
+            wordEl.style.left = `${Math.random() * 100}vw`;
+            wordEl.style.fontSize = "1.2em";
+            wordEl.style.opacity = "0.5";
+            wordEl.style.setProperty('--start-rot', `${startRotation}deg`);
+            wordEl.style.setProperty('--end-rot', `${endRotation}deg`);
+            wordEl.style.animationDuration = `${duration}s`;
+            backgroundRainEl.appendChild(wordEl);
+            wordEl.addEventListener('animationend', () => {
+                wordEl.remove();
+            });
+        }
+
+        function rainEffectLoop() {
+            const cappedSps = Math.min(scorePerSecond, 1000);
+            const wordsPerSecond = 0.2 + (cappedSps / 1000) * 15;
+            const spawnInterval = 1000 / wordsPerSecond;
+            if (scorePerSecond > 0 || hasCheated) {
+                createRainingWord();
+            }
+            rainTimeoutId = setTimeout(rainEffectLoop, spawnInterval);
+        }
+
+        function openStatusModal() {
+            const avgDisplay = document.getElementById('average-stats-display');
+            const historyList = document.getElementById('test-history-list');
+
+            if (testHistory.length === 0) {
+                avgDisplay.textContent = 'No tests completed yet.';
+                historyList.innerHTML = '<li>Complete a typing test to see your history!</li>';
+            } else {
+                const totalWpm = testHistory.reduce((sum, test) => sum + test.wpm, 0);
+                const totalAccuracy = testHistory.reduce((sum, test) => sum + test.accuracy, 0);
+                const avgWpm = (totalWpm / testHistory.length).toFixed(0);
+                const avgAccuracy = (totalAccuracy / testHistory.length).toFixed(0);
+                avgDisplay.textContent = `Average: ${avgWpm} WPM | ${avgAccuracy}% Accuracy`;
+
+                const sortedHistory = [...testHistory].sort((a, b) => b.wpm - a.wpm);
+                historyList.innerHTML = sortedHistory.map((test, index) =>
+                    `<li>
+                    <span>#${index + 1}</span>
+                    <span class="wpm">${test.wpm} WPM</span>
+                    <span class="accuracy">${test.accuracy}% Acc</span>
+                </li>`
+                ).join('');
+            }
+            statusModal.classList.add('visible');
+        }
+
+        function setupEventListeners() {
+            typingInputEl.addEventListener('focus', () => {
+                textToTypeEl.classList.add('focused');
+                cursorEl.classList.add('solid');
+            });
+            typingInputEl.addEventListener('blur', () => {
+                textToTypeEl.classList.remove('focused');
+                cursorEl.classList.remove('solid');
+            });
+            typingInputEl.addEventListener('input', () => {
+                if (!startTime && typingInputEl.value.length > 0) {
+                    startTime = new Date();
+                }
+                renderText();
+                if (typingInputEl.value.length >= currentText.length) {
+                    finishTest();
+                }
+            });
+            upgradesListEl.addEventListener('click', (e) => {
+                const upgradeEl = e.target.closest('.upgrade.buyable');
+                if (!upgradeEl) return;
+                const upgradeId = upgradeEl.dataset.id;
+                const upgrade = upgrades.find(u => u.id === upgradeId);
+                if (upgrade) {
+                    buyUpgrade(upgrade);
+                }
+            });
+            window.addEventListener('resize', updateCursorPosition);
+
+            newsTickerMessageEl.addEventListener('animationend', () => {
+                newsTickerMessageEl.classList.remove('scrolling');
+                isTickerActive = false;
+                processNewsQueue();
+            });
+
+            newTextButton.addEventListener('click', () => {
+                generateText();
+                typingInputEl.focus();
+            });
+
+            hyperSpeedButton.addEventListener('click', () => {
+                isHyperSpeedActive = !isHyperSpeedActive;
+                hyperSpeedButton.classList.toggle('active', isHyperSpeedActive);
+            });
+
+            resetButton.addEventListener('click', () => {
+                if (confirm("Are you sure you want to reset all your progress? This cannot be undone.")) {
+                    localStorage.removeItem('idleTypistSave');
+                    location.reload();
+                }
+            });
+
+            changelogButton.addEventListener('click', () => changelogModal.classList.add('visible'));
+            statusButton.addEventListener('click', openStatusModal);
+            cheatButton.addEventListener('click', () => cheatModal.classList.add('visible'));
+
+            fullscreenButton.addEventListener('click', () => {
+                window.open(window.location.href, '_blank');
+            });
+
+            allModals.forEach(modal => {
+                modal.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('modal-backdrop') || e.target.classList.contains('modal-close')) {
+                        modal.classList.remove('visible');
+                    }
+                });
+            });
+
+            // Cheat Listeners
+            addScoreButton.addEventListener('click', () => {
+                executeCheat(() => {
+                    const amount = parseInt(addScoreInput.value, 10);
+                    if (!isNaN(amount) && amount > 0) {
+                        totalScore += amount;
+                        addScoreInput.value = '';
+                    }
+                });
+            });
+            addMassiveScoreButton.addEventListener('click', () => {
+                executeCheat(() => {
+                    totalScore += 1_000_000_000_000_000;
+                });
+            });
+            setMultiplierButton.addEventListener('click', () => {
+                executeCheat(() => {
+                    const newMult = parseInt(setMultiplierInput.value, 10);
+                    if (!isNaN(newMult) && newMult > 0) {
+                        scoreMultiplier = newMult;
+                        multiplierEl.textContent = `${scoreMultiplier}x`;
+                        setMultiplierInput.value = '';
+                    }
+                });
+            });
+            buyAllUpgradesButton.addEventListener('click', () => {
+                executeCheat(() => {
+                    upgrades.forEach(u => {
+                        if (u.type === 'keyboard') u.level = 1;
+                        else if (u.id === 'monkey') u.level = 2;
+                        else u.level = 99;
+                    });
+                    recalculateMultiplier();
+                    recalculateSPS();
+                    updateUpgrades();
+                });
+            });
+
+        }
+
+        function gameLoop() {
+            totalScoreEl.textContent = `Score: ${formatScore(totalScore)}`;
+            updateUpgrades();
+            requestAnimationFrame(gameLoop);
+        }
+        window.onload = () => {
+            loadGame();
+            generateText();
+            initializeUpgrades();
+            recalculateSPS();
+            recalculateMultiplier();
+            hyperSpeedButton.classList.toggle('active', isHyperSpeedActive);
+            setupEventListeners();
+            requestAnimationFrame(gameLoop);
+            rainEffectLoop();
+            typingInputEl.focus();
+            setInterval(() => {
+                if (scorePerSecond > 0) {
+                    const speedMultiplier = isHyperSpeedActive ? 6 : 1;
+                    totalScore += (scorePerSecond / 10) * speedMultiplier;
+                }
+            }, 100);
+            setInterval(saveGame, 10000);
+        };
+    </script>
+    <div id="credits-banner">
+        <span>
+        Made by adler16, TEMUTYPIST V2 COMING SOON
+    </span>
+    </div>
+
+</body>
+
+</html>
